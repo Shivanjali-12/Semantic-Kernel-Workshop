@@ -5,6 +5,9 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Azure.Identity;
+using OpenTelemetry.Logs;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using OpenTelemetry.Resources;
 
 // Populate values from your OpenAI deployment
 var ModelId = "gpt-4o";
@@ -22,18 +25,43 @@ var builder = Kernel
         credentials: credential
     );
 
-// Add enterprise components
-builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Information));
+// Adding enterprise components - Logging
+var resourceBuilder = ResourceBuilder
+    .CreateDefault()
+    .AddService("TelemetryLogging");
+
+using var loggerFactory = LoggerFactory.Create(builder =>
+{
+    // Adding OpenTelemetry as a logging provider
+    builder.AddOpenTelemetry(options =>
+    {
+        options.SetResourceBuilder(resourceBuilder);
+        //Adding Console Exporter
+        options.AddConsoleExporter();
+        //Add Application Insights Exporter here
+
+        // Format log messages. This is default to false.
+        options.IncludeFormattedMessage = true;
+        options.IncludeScopes = true;
+    });
+    builder.SetMinimumLevel(LogLevel.Information);
+});
+
+builder.Services.AddSingleton(loggerFactory);
 
 // Build the kernel
 Kernel kernel = builder.Build();
 var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-// Add Lights plugin
-kernel.Plugins.AddFromType<LightsPlugin>();
+//Adding Database Plugin
+var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\semantic-kernel-project\\students.json"); //Replace with correct path
+kernel.Plugins.AddFromObject(databasePlugin);
 
-//Add Time Plugin
-kernel.Plugins.AddFromType<TimePlugin>();
+//Add File Plugin here
+
+
+//Add DateTime Plugin here
+
 
 // Enable planning using automatic function calling
 OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
@@ -41,20 +69,29 @@ OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
     FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
 };
 
+//Modify the system prompt according to following use case:
+//  - A Classroom assistant that provides book recommendations for students based on their age and interests.
+//  - Appends the Recommendations and time of recommendations to a text file.
+
 // Define the system prompt
 var systemPrompt = @"
-You are a smart home assistant responsible for managing lights.
-Your task is to ensure that all the lights are turned on or off according to following conditions:
-- Bedroom Lights: Should be turned on between 8AM-10PM, otherwise turned off.
-- Porch Light: Ensure it's always on.
-- Chandelier: Should be turned on between 10PM-8AM, otherwise turned off.
-- Table Lamp: Turn on or off based on user input. You should always ask the user for input.
-You should automatically call the appropriate plugin functions to accomplish this task.";
+You are a Classroom assistant whose job is to provide book recommendations for students.
+Your task is to read all student records from the database and for each student, recommend three books based on their interests.";
+
+Console.WriteLine("Classroom Assistant is running...");
+
+//Console.Write("User > ");
+//Console.ReadLine();
+
+//var result = await chatCompletionService.GetChatMessageContentAsync(
+//            systemPrompt,
+//            executionSettings: openAIPromptExecutionSettings,
+//            kernel: kernel);
+
+//Console.WriteLine("Assistant > " + result);
 
 var history = new ChatHistory();
 history.AddSystemMessage(systemPrompt);
-
-Console.WriteLine("SmartHome Assistant is running...");
 
 // Handle user input
 string? userInput;

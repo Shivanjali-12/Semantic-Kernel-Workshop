@@ -5,6 +5,9 @@
 //using Microsoft.Extensions.Logging;
 //using Microsoft.Extensions.DependencyInjection;
 //using Azure.Identity;
+//using OpenTelemetry.Logs;
+//using Azure.Monitor.OpenTelemetry.Exporter;
+//using OpenTelemetry.Resources;
 
 //// Populate values from your OpenAI deployment
 //var ModelId = "gpt-4o";
@@ -22,23 +25,45 @@
 //        credentials: credential
 //    );
 
-//// Add enterprise components
-//builder.Services.AddLogging(services => services.AddConsole().SetMinimumLevel(LogLevel.Information));
+//// Adding enterprise components - Logging
+//var resourceBuilder = ResourceBuilder
+//    .CreateDefault()
+//    .AddService("TelemetryLogging");
+
+//using var loggerFactory = LoggerFactory.Create(builder =>
+//{
+//    // Adding OpenTelemetry as a logging provider
+//    builder.AddOpenTelemetry(options =>
+//    {
+//        options.SetResourceBuilder(resourceBuilder);
+//        //Adding Console Exporter
+//        options.AddConsoleExporter();
+//        //Adding Application Insights Exporter
+//        options.AddAzureMonitorLogExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>");
+//        // Format log messages. This is default to false.
+//        options.IncludeFormattedMessage = true;
+//        options.IncludeScopes = true;
+//    });
+//    builder.SetMinimumLevel(LogLevel.Information);
+//});
+
+//builder.Services.AddSingleton(loggerFactory);
 
 //// Build the kernel
 //Kernel kernel = builder.Build();
 //var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-////Add Database Plugin
-//var databasePlugin = new DatabasePlugin.DatabasePlugin("C:\\learn-o-tron\\semantic-kernel-project\\students.json"); //Replace with correct path
+////Adding Database Plugin
+//var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\semantic-kernel-project\\students.json"); //Replace with correct path
 //kernel.Plugins.AddFromObject(databasePlugin);
 
-////Add File Plugin
+////Adding File Plugin
 //var filePlugin = new FilePlugin("C:\\learn-o-tron\\semantic-kernel-project\\recommendations.txt"); //Replace with correct path
 //kernel.Plugins.AddFromObject(filePlugin);
 
-////Add Time Plugin
-//kernel.Plugins.AddFromType<TimePlugin>();
+////Adding DateTime Plugin
+//var dateTimePlugin = new DateTimePlugin();
+//kernel.Plugins.AddFromObject(dateTimePlugin);
 
 //// Enable planning using automatic function calling
 //OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
@@ -48,7 +73,7 @@
 
 //// Define the system prompt
 //var systemPrompt = @"
-//You are a classroom assistant who provides 3 book recommendations for students.  
+//You are a classroom assistant whose job is to provide book recommendations for students.  
 
 //Your task:  
 //1. Read all student records from the database.
@@ -59,10 +84,10 @@
 //You should keep updating the user about the progress of the task along with related information.
 //You should automatically call the appropriate plugin functions to accomplish this task.";
 
+//Console.WriteLine("Classroom Assistant is running...");
+
 //var history = new ChatHistory();
 //history.AddSystemMessage(systemPrompt);
-
-//Console.WriteLine("Classroom Assistant is running...");
 
 //// Handle user input
 //string? userInput;

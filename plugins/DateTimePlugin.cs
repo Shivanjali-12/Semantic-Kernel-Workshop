@@ -1,7 +1,7 @@
 ﻿using Microsoft.SemanticKernel;
 using System.ComponentModel;
 
-public class TimePlugin
+public class DateTimePlugin
 {
     [KernelFunction]
     [Description("Gets the current time.")]
