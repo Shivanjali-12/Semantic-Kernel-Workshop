@@ -1,7 +1,15 @@
 ﻿using Azure.Identity;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
+using OpenTelemetry.Resources;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Logs;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
 namespace OrderPizzaAgent;
 
@@ -18,6 +26,34 @@ public static class OrderPizzaAgent
         // Use DefaultAzureCredential for RBAC authentication  
         var credential = new DefaultAzureCredential();
 
+        // Adding enterprise components - Metrics and Logging
+        var resourceBuilder = ResourceBuilder
+            .CreateDefault()
+            .AddService("TelemetryLogging");
+
+        var meterProvider = Sdk.CreateMeterProviderBuilder()
+            .SetResourceBuilder(resourceBuilder)
+            .AddMeter("Microsoft.SemanticKernel*")
+            .AddAzureMonitorMetricExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>")
+            .Build();
+
+        using var loggerFactory = LoggerFactory.Create(builder =>
+        {
+            // Adding OpenTelemetry as a logging provider
+            builder.AddOpenTelemetry(options =>
+            {
+                options.SetResourceBuilder(resourceBuilder);
+                //Adding Console Exporter
+                options.AddConsoleExporter();
+                //Adding Application Insights Exporter
+                options.AddAzureMonitorLogExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>");
+                // Format log messages. This is default to false.
+                options.IncludeFormattedMessage = true;
+                options.IncludeScopes = true;
+            });
+            builder.SetMinimumLevel(LogLevel.Information);
+        });
+
         // Create a kernel with Azure OpenAI chat completion  
         var builder = Kernel
             .CreateBuilder()
@@ -27,6 +63,7 @@ public static class OrderPizzaAgent
                 credentials: credential
             );
 
+        builder.Services.AddSingleton(loggerFactory);
 
         // Build the kernel
         Kernel kernel = builder.Build();
@@ -42,15 +79,16 @@ public static class OrderPizzaAgent
             {
                 Name = "PizzaOrderAgent",
                 Instructions =
-                    """
-                    You are an agent that helps users order pizzas step by step.
-                    Follow this process:
+                """
+                You are an agent that helps users order pizzas step by step.
+                Follow this process:
                     1. Ask for pizza size (Small, Medium, Large).
                     2. Ask for toppings.
                     3. Confirm the order.
                     4. Place the order when the user confirms.
-                    """,
-                Kernel = kernel
+                """,
+                Kernel = kernel,
+                Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings() { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() })
             };
 
         Console.WriteLine("Welcome to Shiv's Pizza! What would you like to have today?");

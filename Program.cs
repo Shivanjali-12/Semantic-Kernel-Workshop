@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using Azure.Identity;
 using OpenTelemetry.Logs;
+using OpenTelemetry;
+using OpenTelemetry.Metrics;
 using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 
@@ -16,19 +18,16 @@ var endpoint = "https://learn-o-tron.openai.azure.com/"; //Replace with Endpoint
 // Use DefaultAzureCredential for RBAC authentication  
 var credential = new DefaultAzureCredential();
 
-// Create a kernel with Azure OpenAI chat completion  
-var builder = Kernel
-    .CreateBuilder()
-    .AddAzureOpenAIChatCompletion(
-        deploymentName: ModelId,
-        endpoint: endpoint,
-        credentials: credential
-    );
-
-// Adding enterprise components - Logging
+// Adding enterprise components - Metrics and Logging
 var resourceBuilder = ResourceBuilder
     .CreateDefault()
     .AddService("TelemetryLogging");
+
+using var meterProvider = Sdk.CreateMeterProviderBuilder()
+    .SetResourceBuilder(resourceBuilder)
+    .AddMeter("Microsoft.SemanticKernel*")
+    .AddAzureMonitorMetricExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>")
+    .Build();
 
 using var loggerFactory = LoggerFactory.Create(builder =>
 {
@@ -46,6 +45,15 @@ using var loggerFactory = LoggerFactory.Create(builder =>
     });
     builder.SetMinimumLevel(LogLevel.Information);
 });
+
+// Create a kernel with Azure OpenAI chat completion  
+var builder = Kernel
+    .CreateBuilder()
+    .AddAzureOpenAIChatCompletion(
+        deploymentName: ModelId,
+        endpoint: endpoint,
+        credentials: credential
+    );
 
 builder.Services.AddSingleton(loggerFactory);
 
