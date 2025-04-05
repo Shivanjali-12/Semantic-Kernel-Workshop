@@ -1,15 +1,15 @@
 ﻿using Azure.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using OpenTelemetry.Resources;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Logs;
 using Azure.Monitor.OpenTelemetry.Exporter;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 
 namespace OrderPizzaAgent;
 
@@ -67,7 +67,6 @@ public static class OrderPizzaAgent
 
         // Build the kernel
         Kernel kernel = builder.Build();
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
         //Adding Database Plugin
         var orderPizzaPlugin = new OrderPizzaPlugin();

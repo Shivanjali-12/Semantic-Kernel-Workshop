@@ -70,24 +70,24 @@ public static class OrderPizzaAgent2
 
         // Build the kernel
         Kernel kernel = builder.Build();
-        var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
-        // Adding Database Plugin
+        //Adding Database Plugin
         var orderPizzaPlugin = new OrderPizzaPlugin();
         kernel.Plugins.AddFromObject(orderPizzaPlugin);
 
         Console.WriteLine("Defining agent...");
 
-        // Read YAML resource
+        //Read YAML resource
         string orderPizzaYaml = File.ReadAllText("C:\\learn-o-tron\\semantic-kernel-project\\OrderPizza.yaml");
+
         // Convert to a prompt template config correctly
         PromptTemplateConfig templateConfig = new PromptTemplateConfig(orderPizzaYaml);
+
         // Create agent with Instructions, Name, and Description provided by the template config
         ChatCompletionAgent agent =
             new(templateConfig, kernel.GetRequiredService<IPromptTemplateFactory>())
             {
                 Kernel = kernel,
-                // Provide default values for template parameters
                 Arguments = new KernelArguments(new AzureOpenAIPromptExecutionSettings() { FunctionChoiceBehavior = FunctionChoiceBehavior.Auto() })
             };
 
@@ -118,12 +118,12 @@ public static class OrderPizzaAgent2
             KernelArguments arguments =
                 new()
                 {
-                    { "now", now.ToShortDateString() + " " + now.ToShortTimeString() }
+                    { "now", $"{now.ToShortDateString()} {now.ToShortTimeString()}" }
                 };
             await foreach (ChatMessageContent response in agent.InvokeAsync(message, agentThread, options: new() { KernelArguments = arguments }))
             {
                 // Display response.
-                Console.WriteLine(response.Content);
+                Console.WriteLine($"{response.Content}");
             }
 
         } while (!isComplete);
