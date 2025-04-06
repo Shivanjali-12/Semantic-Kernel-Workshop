@@ -36,13 +36,18 @@
 
 - Navigate back to Program.cs file
 
-    - Add OpenTelemetry Exporter for Application Insights
+    - Add Application Insights Exporter for both metrics and logs
         ```
-        //Adding Application Insights Exporter
+        //Adding Application Insights Exporter for metrics here
+        .AddAzureMonitorMetricExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>")
+        ```
+
+        ```
+        //Adding Application Insights Exporter for logs here
         options.AddAzureMonitorLogExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>");
         ```
 
-- Running the program now should send logs to your application insights instance as well. You can see those by navigating to "Transaction Search" section in the left panel and selecting Event Types as "Trace"
+- Running the program now should send metrics and logs to your application insights instance. You can see those by navigating to "Transaction Search" section in the left panel and selecting Event Types as "Trace"
 
     ![AppInsights](./images/image.png)
 
@@ -63,3 +68,5 @@
     - Appends the Recommendations and time of recommendations to a text file.
 
     Tip: Age should be calculated by using Student's DOB and Current Date.
+
+- Run the Program and interact with your Classroom Assistant.

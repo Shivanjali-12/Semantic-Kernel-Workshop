@@ -35,7 +35,8 @@ var resourceBuilder = ResourceBuilder
 using var meterProvider = Sdk.CreateMeterProviderBuilder()
     .SetResourceBuilder(resourceBuilder)
     .AddMeter("Microsoft.SemanticKernel*")
-    .AddAzureMonitorMetricExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>")
+    //Add Application Insights Exporter for metrics here
+
     .Build();
 
 using var loggerFactory = LoggerFactory.Create(builder =>
@@ -46,7 +47,7 @@ using var loggerFactory = LoggerFactory.Create(builder =>
         options.SetResourceBuilder(resourceBuilder);
         //Adding Console Exporter
         options.AddConsoleExporter();
-        //Add Application Insights Exporter here
+        //Add Application Insights Exporter for logs here
 
         // Format log messages. This is default to false.
         options.IncludeFormattedMessage = true;
