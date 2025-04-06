@@ -41,12 +41,12 @@ public class SafePromptFilter : IPromptRenderFilter
 {
     public async Task OnPromptRenderAsync(PromptRenderContext context, Func<PromptRenderContext, Task> next)
     {
-        // Example: get function information
-        var functionName = context.Function.Name;
+        var originalPrompt = context.RenderedPrompt;
+
+        var modifiedPrompt = originalPrompt.Replace("something bad", "something safe");
+
+        context.RenderedPrompt = modifiedPrompt;
 
         await next(context);
-
-        // Example: override rendered prompt before sending it to AI
-        context.RenderedPrompt = "Safe prompt";
     }
 }
