@@ -35,7 +35,7 @@ public class InputValidationFilter : IFunctionInvocationFilter
 }
 
 /// <summary>
-/// Example of prompt render filter which overrides rendered prompt before sending it to AI.
+/// Example of prompt render filter which replaces "something bad" with "something good" in the rendered prompt before sending it to AI.
 /// </summary>
 public class SafePromptFilter : IPromptRenderFilter
 {

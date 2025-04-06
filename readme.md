@@ -1,6 +1,6 @@
 # Instructions for LAB
 
-## Prerquisites
+## Prerequisites
 
 - An Azure OpenAI Instance with gpt-4o model deployed
 - Provide yourself following RBAC Roles on your Azure OpenAI instance
