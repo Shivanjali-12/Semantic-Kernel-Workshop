@@ -47,9 +47,10 @@
         options.AddAzureMonitorLogExporter(options => options.ConnectionString = "<APP-INSIGHTS CONNECTION STRING>");
         ```
 
-- Running the program now should send metrics and logs to your application insights instance. You can see those by navigating to "Transaction Search" section in the left panel and selecting Event Types as "Trace"
+- Running the program now should send metrics and logs to your application insights instance. You can see them by navigating to Monitoring -> Metrics/Logs section in the left panel.
 
-    ![AppInsights](./images/image.png)
+    ![AppInsights metrics](./images/metrics.png)
+    ![AppInsights logs](./images/logs.png)
 
 - Add FilePlugin and DateTimePlugin to the Kernel now.
 
