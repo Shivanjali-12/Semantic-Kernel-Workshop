@@ -28,7 +28,7 @@
     - Correct the path of students.json file
         ```
         //Adding Database Plugin
-        var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\semantic-kernel-project\\students.json"); //Replace with correct path
+        var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\Semantic-Kernel-Workshop\\students.json"); //Replace with correct path
         kernel.Plugins.AddFromObject(databasePlugin);
         ```
 

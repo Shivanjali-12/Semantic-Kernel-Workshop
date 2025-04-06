@@ -1,15 +1,15 @@
 ﻿using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
-using OpenTelemetry.Resources;
 using OpenTelemetry;
-using OpenTelemetry.Metrics;
 using OpenTelemetry.Logs;
-using Azure.Monitor.OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 namespace OrderPizzaAgent;
 
@@ -25,6 +25,15 @@ public static class OrderPizzaAgent2
 
         // Use DefaultAzureCredential for RBAC authentication  
         var credential = new DefaultAzureCredential();
+
+        // Create a kernel builder with Azure OpenAI chat completion  
+        var builder = Kernel
+            .CreateBuilder()
+            .AddAzureOpenAIChatCompletion(
+                deploymentName: ModelId,
+                endpoint: endpoint,
+                credentials: credential
+            );
 
         // Adding enterprise components - Metrics and Logging
         var resourceBuilder = ResourceBuilder
@@ -54,15 +63,7 @@ public static class OrderPizzaAgent2
             builder.SetMinimumLevel(LogLevel.Information);
         });
 
-        // Create a kernel with Azure OpenAI chat completion  
-        var builder = Kernel
-            .CreateBuilder()
-            .AddAzureOpenAIChatCompletion(
-                deploymentName: ModelId,
-                endpoint: endpoint,
-                credentials: credential
-            );
-
+        // Add loggerFactory to the kernel builder
         builder.Services.AddSingleton(loggerFactory);
 
         // Register IPromptTemplateFactory properly
@@ -71,7 +72,7 @@ public static class OrderPizzaAgent2
         // Build the kernel
         Kernel kernel = builder.Build();
 
-        //Adding Database Plugin
+        //Adding Order Pizza Plugin
         var orderPizzaPlugin = new OrderPizzaPlugin();
         kernel.Plugins.AddFromObject(orderPizzaPlugin);
 

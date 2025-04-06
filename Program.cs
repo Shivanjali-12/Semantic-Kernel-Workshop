@@ -1,14 +1,14 @@
 ﻿// Import packages
+using Azure.Identity;
+using Azure.Monitor.OpenTelemetry.Exporter;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
-using Azure.Identity;
-using OpenTelemetry.Logs;
 using OpenTelemetry;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
-using Azure.Monitor.OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 
 // Populate values from your OpenAI deployment
@@ -17,6 +17,15 @@ var endpoint = "https://learn-o-tron.openai.azure.com/"; //Replace with Endpoint
 
 // Use DefaultAzureCredential for RBAC authentication  
 var credential = new DefaultAzureCredential();
+
+// Create a kernel builder with Azure OpenAI chat completion  
+var builder = Kernel
+    .CreateBuilder()
+    .AddAzureOpenAIChatCompletion(
+        deploymentName: ModelId,
+        endpoint: endpoint,
+        credentials: credential
+    );
 
 // Adding enterprise components - Metrics and Logging
 var resourceBuilder = ResourceBuilder
@@ -46,23 +55,14 @@ using var loggerFactory = LoggerFactory.Create(builder =>
     builder.SetMinimumLevel(LogLevel.Information);
 });
 
-// Create a kernel with Azure OpenAI chat completion  
-var builder = Kernel
-    .CreateBuilder()
-    .AddAzureOpenAIChatCompletion(
-        deploymentName: ModelId,
-        endpoint: endpoint,
-        credentials: credential
-    );
-
+// Add loggerFactory to the kernel builder
 builder.Services.AddSingleton(loggerFactory);
 
 // Build the kernel
 Kernel kernel = builder.Build();
-var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
 //Adding Database Plugin
-var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\semantic-kernel-project\\students.json"); //Replace with correct path
+var databasePlugin = new DatabasePlugin("C:\\learn-o-tron\\Semantic-Kernel-Workshop\\students.json"); //Replace with correct path
 kernel.Plugins.AddFromObject(databasePlugin);
 
 //Add File Plugin here
@@ -85,6 +85,8 @@ OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
 var systemPrompt = @"
 You are a Classroom assistant whose job is to provide book recommendations for students.
 Your task is to read all student records from the database and for each student, recommend three books based on their interests.";
+
+var chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
 
 Console.WriteLine("Classroom Assistant is running...");
 
